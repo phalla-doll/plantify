@@ -253,9 +253,7 @@ export default function Page() {
             {products.map((product) => (
               <div 
                 key={product.id}
-                className={`relative group p-6 pb-8 transition-all duration-300 ease-out flex flex-col 
-                  ${product.featured ? 'bg-[#222325] z-10 xl:rotate-[-4deg] xl:scale-[1.05] shadow-2xl shadow-green-900/10 border border-white/10' : 'bg-[#1A1A1C] hover:bg-[#1E1F21] border border-transparent'}
-                `}
+                className={`relative group p-6 pb-8 transition-all duration-300 ease-out flex flex-col bg-[#1A1A1C] hover:bg-[#1E1F21] border border-transparent`}
                 style={{ borderRadius: '4px' }}
               >
                 {/* Background glow effect for featured */}
