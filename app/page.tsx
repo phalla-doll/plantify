@@ -215,7 +215,7 @@ export default function Page() {
           <div className="space-y-6">
             <h3 className="text-xs font-semibold tracking-wider text-zinc-500 uppercase">Price</h3>
             {/* Visual mock of slider */}
-            <div className="px-1 relative h-10 w-full flex items-end justify-center">
+            <div className="px-1 relative h-10 w-full flex items-end justify-center group">
                 <div className="absolute inset-0 flex items-end justify-between px-2 pb-2 opacity-30">
                     {/* Mock bars for histogram */}
                     <div className="w-1.5 h-3 bg-zinc-600 hover:bg-emerald-400 transition-colors rounded-t-sm"></div>
@@ -230,21 +230,50 @@ export default function Page() {
                     <div className="w-1.5 h-4 bg-zinc-600 rounded-t-sm"></div>
                 </div>
                 <div className="w-full h-1 bg-zinc-800 rounded-full relative z-10">
-                    <div className="absolute left-[30%] right-[30%] h-full bg-emerald-400 rounded-full"></div>
-                    <div className="absolute left-[30%] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-pointer border border-zinc-200 hover:scale-125 transition-transform"></div>
-                    <div className="absolute right-[30%] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-pointer border border-zinc-200 hover:scale-125 transition-transform"></div>
+                    <div 
+                      className="absolute h-full bg-emerald-400 rounded-full"
+                      style={{ 
+                        left: `${(priceRange[0] / 300) * 100}%`, 
+                        right: `${100 - (priceRange[1] / 300) * 100}%` 
+                      }}
+                    ></div>
+                </div>
+                {/* Range inputs overlay */}
+                <div className="absolute inset-x-0 bottom-0 h-4 flex pointer-events-none translate-y-1.5">
+                  <input
+                    type="range"
+                    min="0"
+                    max="300"
+                    value={priceRange[0]}
+                    onChange={(e) => {
+                      const value = Math.min(Number(e.target.value), priceRange[1] - 5);
+                      setPriceRange([value, priceRange[1]]);
+                    }}
+                    className="absolute w-full h-full appearance-none bg-transparent pointer-events-auto cursor-pointer z-20 focus:outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-zinc-200 [&::-webkit-slider-thumb]:shadow-[0_2px_8px_rgba(0,0,0,0.5)] [&::-webkit-slider-thumb]:hover:scale-125 [&::-webkit-slider-thumb]:transition-transform"
+                  />
+                  <input
+                    type="range"
+                    min="0"
+                    max="300"
+                    value={priceRange[1]}
+                    onChange={(e) => {
+                      const value = Math.max(Number(e.target.value), priceRange[0] + 5);
+                      setPriceRange([priceRange[0], value]);
+                    }}
+                    className="absolute w-full h-full appearance-none bg-transparent pointer-events-auto cursor-pointer z-30 focus:outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-zinc-200 [&::-webkit-slider-thumb]:shadow-[0_2px_8px_rgba(0,0,0,0.5)] [&::-webkit-slider-thumb]:hover:scale-125 [&::-webkit-slider-thumb]:transition-transform"
+                  />
                 </div>
             </div>
             
             <div className="flex items-center gap-3">
               <div className="flex-1 bg-[#121214] rounded-xl border border-white/5 flex items-center px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                 <span className="text-zinc-500 text-sm mr-2">$</span>
-                <input type="number" value={priceRange[0]} onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])} className="bg-transparent w-full text-sm focus:outline-none font-mono" />
+                <input type="number" value={priceRange[0]} onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])} className="bg-transparent w-full text-sm focus:outline-none font-mono text-zinc-300" />
               </div>
               <span className="text-zinc-600">-</span>
               <div className="flex-1 bg-[#121214] rounded-xl border border-white/5 flex items-center px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                 <span className="text-zinc-500 text-sm mr-2">$</span>
-                <input type="number" value={priceRange[1]} onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])} className="bg-transparent w-full text-sm focus:outline-none font-mono" />
+                <input type="number" value={priceRange[1]} onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])} className="bg-transparent w-full text-sm focus:outline-none font-mono text-zinc-300" />
               </div>
             </div>
           </div>
