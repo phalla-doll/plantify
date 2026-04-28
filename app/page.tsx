@@ -99,6 +99,26 @@ export default function Page() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [quickViewProduct, setQuickViewProduct] = useState<typeof products[0] | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc'>('default');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 300]);
+
+  const filteredProducts = React.useMemo(() => {
+    let result = products;
+    if (searchQuery) result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.subtitle.toLowerCase().includes(searchQuery.toLowerCase()));
+    if (selectedCategory) result = result.filter(p => p.category === selectedCategory);
+    if (selectedSizes.length > 0) result = result.filter(p => selectedSizes.includes(p.size));
+    if (selectedTags.length > 0) result = result.filter(p => p.tags.some(tag => selectedTags.includes(tag)));
+    result = result.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
+    
+    if (sortBy === 'price-asc') result = [...result].sort((a, b) => a.price - b.price);
+    else if (sortBy === 'price-desc') result = [...result].sort((a, b) => b.price - a.price);
+    return result;
+  }, [searchQuery, selectedCategory, selectedSizes, selectedTags, sortBy, priceRange]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -160,7 +180,9 @@ export default function Page() {
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-emerald-400 transition-colors" weight="bold" />
             <input 
               type="text" 
-              placeholder="Search..." 
+              placeholder="Search products..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-[#121214] border border-white/5 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-emerald-500/40 focus:bg-[#18181b] transition-all placeholder:text-zinc-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"
             />
           </div>
@@ -169,22 +191,23 @@ export default function Page() {
           <div className="space-y-4">
             <h3 className="text-xs font-semibold tracking-wider text-zinc-500 uppercase">Categories</h3>
             <ul className="space-y-3 text-[15px] text-zinc-400">
-              <li className="flex items-center justify-between text-emerald-400 font-medium relative pl-5 tracking-tight">
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
-                Potted Elegance <span className="text-xs text-emerald-500/70 font-normal">78</span>
+              <li 
+                onClick={() => setSelectedCategory(null)}
+                className={`flex items-center justify-between cursor-pointer tracking-tight transition-colors ${!selectedCategory ? 'text-emerald-400 font-medium relative pl-5' : 'text-zinc-400 hover:text-white pl-4'}`}
+              >
+                {!selectedCategory && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>}
+                All Categories <span className={`text-xs ${!selectedCategory ? 'text-emerald-500/70 font-normal' : 'text-zinc-500'}`}>{products.length}</span>
               </li>
-              <li className="flex items-center justify-between hover:text-white transition-colors cursor-pointer pl-4">
-                Hanging Greenery <span className="text-xs text-gray-500">59</span>
-              </li>
-              <li className="flex items-center justify-between hover:text-white transition-colors cursor-pointer pl-4">
-                Outdoor Charm <span className="text-xs text-zinc-500">64</span>
-              </li>
-              <li className="flex items-center justify-between hover:text-white transition-colors cursor-pointer pl-4 tracking-tight">
-                Compact Decor <span className="text-xs text-zinc-500">127</span>
-              </li>
-              <li className="flex items-center justify-between hover:text-white transition-colors cursor-pointer pl-4 tracking-tight">
-                Statement Plants <span className="text-xs text-zinc-500">36</span>
-              </li>
+              {Array.from(new Set(products.map(p => p.category))).map(cat => (
+                <li 
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`flex items-center justify-between cursor-pointer tracking-tight transition-colors ${selectedCategory === cat ? 'text-emerald-400 font-medium relative pl-5' : 'text-zinc-400 hover:text-white pl-4'}`}
+                >
+                  {selectedCategory === cat && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>}
+                  {cat} <span className={`text-xs ${selectedCategory === cat ? 'text-emerald-500/70 font-normal' : 'text-zinc-500'}`}>{products.filter(p => p.category === cat).length}</span>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -216,12 +239,12 @@ export default function Page() {
             <div className="flex items-center gap-3">
               <div className="flex-1 bg-[#121214] rounded-xl border border-white/5 flex items-center px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                 <span className="text-zinc-500 text-sm mr-2">$</span>
-                <input type="text" value="50" readOnly className="bg-transparent w-full text-sm focus:outline-none font-mono" />
+                <input type="number" value={priceRange[0]} onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])} className="bg-transparent w-full text-sm focus:outline-none font-mono" />
               </div>
               <span className="text-zinc-600">-</span>
               <div className="flex-1 bg-[#121214] rounded-xl border border-white/5 flex items-center px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                 <span className="text-zinc-500 text-sm mr-2">$</span>
-                <input type="text" value="250" readOnly className="bg-transparent w-full text-sm focus:outline-none font-mono" />
+                <input type="number" value={priceRange[1]} onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])} className="bg-transparent w-full text-sm focus:outline-none font-mono" />
               </div>
             </div>
           </div>
@@ -233,8 +256,9 @@ export default function Page() {
               {['S', 'M', 'L', 'XL'].map((size) => (
                 <button 
                   key={size}
+                  onClick={() => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}
                   className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm transition-all border ${
-                    size === 'M' ? 'bg-zinc-800 border-zinc-600 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]' : 'bg-transparent border-white/5 text-zinc-400 hover:border-white/20 hover:bg-white/5'
+                    selectedSizes.includes(size) ? 'bg-zinc-800 border-emerald-500/50 text-emerald-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]' : 'bg-transparent border-white/5 text-zinc-400 hover:border-white/20 hover:bg-white/5'
                   }`}
                 >
                   {size}
@@ -250,9 +274,10 @@ export default function Page() {
               {['Modern', 'Minimalist', 'Air-Purifying', 'Mini', 'Indoor', 'Luxury', 'Office', 'Exotic'].map((tag) => (
                 <button 
                   key={tag}
+                  onClick={() => setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
                   className={`px-4 py-2 rounded-lg text-[13px] transition-all border ${
-                    ['Air-Purifying', 'Luxury'].includes(tag) 
-                    ? 'bg-zinc-800 border-zinc-700 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]' 
+                    selectedTags.includes(tag) 
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]' 
                     : 'bg-transparent border-white/5 text-zinc-400 hover:border-white/20 hover:bg-white/5'
                   }`}
                 >
@@ -267,32 +292,48 @@ export default function Page() {
         {/* Main Content */}
         <section className="flex-1 min-w-0">
           <div className="mb-8">
-            <h1 className="font-outfit text-4xl md:text-5xl font-semibold tracking-tighter text-white mb-6 leading-none">Potted Elegance</h1>
+            <h1 className="font-outfit text-4xl md:text-5xl font-semibold tracking-tighter text-white mb-6 leading-none">{selectedCategory || 'All Plants'}</h1>
             
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 z-40 relative">
               <div className="flex flex-wrap items-center gap-2">
                 {/* Active Filter Chips */}
-                {[
-                  { label: "Price range", value: "$50 - 250" },
-                  { label: "Size", value: "Medium" },
-                  { label: "Tag", value: "Luxury", hideLabel: true },
-                  { label: "Tag", value: "Air-Purifying", hideLabel: true },
-                ].map((filter, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-[#18181b] px-3 py-1.5 rounded-full text-[13px] text-zinc-300 border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
-                    <span>{filter.hideLabel ? '' : <span className="text-zinc-500">{filter.label}: </span>}{filter.value}</span>
-                    <button className="text-zinc-500 hover:text-white transition-colors"><X className="w-3.5 h-3.5" weight="bold" /></button>
+                {selectedCategory && (
+                  <div className="flex items-center gap-2 bg-[#18181b] px-3 py-1.5 rounded-full text-[13px] text-zinc-300 border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+                    <span><span className="text-zinc-500">Category: </span>{selectedCategory}</span>
+                    <button onClick={() => setSelectedCategory(null)} className="text-zinc-500 hover:text-white transition-colors"><X className="w-3.5 h-3.5" weight="bold" /></button>
+                  </div>
+                )}
+                {selectedSizes.map(size => (
+                  <div key={`size-${size}`} className="flex items-center gap-2 bg-[#18181b] px-3 py-1.5 rounded-full text-[13px] text-zinc-300 border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+                    <span><span className="text-zinc-500">Size: </span>{size}</span>
+                    <button onClick={() => setSelectedSizes(prev => prev.filter(s => s !== size))} className="text-zinc-500 hover:text-white transition-colors"><X className="w-3.5 h-3.5" weight="bold" /></button>
                   </div>
                 ))}
+                {selectedTags.map(tag => (
+                  <div key={`tag-${tag}`} className="flex items-center gap-2 bg-[#18181b] px-3 py-1.5 rounded-full text-[13px] text-zinc-300 border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+                    <span>{tag}</span>
+                    <button onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))} className="text-zinc-500 hover:text-white transition-colors"><X className="w-3.5 h-3.5" weight="bold" /></button>
+                  </div>
+                ))}
+                {searchQuery && (
+                  <div className="flex items-center gap-2 bg-[#18181b] px-3 py-1.5 rounded-full text-[13px] text-zinc-300 border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+                    <span><span className="text-zinc-500">Search: </span>&quot;{searchQuery}&quot;</span>
+                    <button onClick={() => setSearchQuery('')} className="text-zinc-500 hover:text-white transition-colors"><X className="w-3.5 h-3.5" weight="bold" /></button>
+                  </div>
+                )}
               </div>
               
               <div className="flex items-center gap-6 text-[13px] text-zinc-400">
-                <button className="flex items-center gap-2 hover:text-white transition-colors">
-                  Default Sorting <ChevronDown className="w-3 h-3" weight="bold" />
-                </button>
-                <div className="w-[1px] h-4 bg-white/10"></div>
-                <button className="flex items-center gap-2 hover:text-white transition-colors">
-                  Categories <ChevronDown className="w-3 h-3" weight="bold" />
-                </button>
+                <div className="relative group">
+                  <button className="flex items-center gap-2 hover:text-white transition-colors py-2">
+                    {sortBy === 'default' ? 'Default Sorting' : sortBy === 'price-asc' ? 'Price: Low to High' : 'Price: High to Low'} <ChevronDown className="w-3 h-3" weight="bold" />
+                  </button>
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-[#121214] border border-white/10 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+                    <button onClick={() => setSortBy('default')} className="w-full text-left px-4 py-2.5 text-sm text-zinc-400 hover:text-emerald-400 hover:bg-white/5 transition-colors">Default Sorting</button>
+                    <button onClick={() => setSortBy('price-asc')} className="w-full text-left px-4 py-2.5 text-sm text-zinc-400 hover:text-emerald-400 hover:bg-white/5 transition-colors">Price: Low to High</button>
+                    <button onClick={() => setSortBy('price-desc')} className="w-full text-left px-4 py-2.5 text-sm text-zinc-400 hover:text-emerald-400 hover:bg-white/5 transition-colors">Price: High to Low</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -304,7 +345,24 @@ export default function Page() {
             animate="show"
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-white/5 rounded-[2rem] overflow-hidden border border-white/5 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
           >
-            {products.map((product) => (
+            {filteredProducts.length === 0 ? (
+              <div className="col-span-full py-20 flex flex-col items-center justify-center text-zinc-500">
+                <Leaf className="w-12 h-12 mb-4 opacity-20" weight="duotone" />
+                <p className="text-lg font-medium">No products match your filters</p>
+                <button 
+                  onClick={() => {
+                    setSelectedCategory(null);
+                    setSelectedSizes([]);
+                    setSelectedTags([]);
+                    setSearchQuery('');
+                    setPriceRange([0, 300]);
+                  }}
+                  className="mt-4 text-emerald-400 hover:text-emerald-300 text-sm transition-colors"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            ) : filteredProducts.map((product) => (
               <motion.div 
                 variants={itemVariants}
                 key={product.id}
